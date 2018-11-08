@@ -208,7 +208,7 @@ class SyncInvalidMetadataTestCase(unittest.TestCase):
         )
 
 
-class ChangeFeedTestCase(BaseAPITestCase):
+class ChangeFeedTestCase(unittest.TestCase):
     """Sync a repository, change its feed, and sync it again.
 
     Specifically, the test case procedure is as follows:
@@ -224,6 +224,9 @@ class ChangeFeedTestCase(BaseAPITestCase):
     """
 
     def test_all(self):
+        # Provide a server config
+        self.cfg = config.get_config()
+
         """Sync a repository, change its feed, and sync it again."""
         if check_issue_3104(self.cfg):
             self.skipTest('https://pulp.plan.io/issues/3104')
