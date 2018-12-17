@@ -5,6 +5,7 @@ For information on repository CRUD operations, see `Creation, Deletion and
 Configuration
 <http://docs.pulpproject.org/en/latest/dev-guide/integration/rest-api/repo/cud.html>`_.
 """
+import pytest
 import os
 import unittest
 from urllib.parse import urljoin

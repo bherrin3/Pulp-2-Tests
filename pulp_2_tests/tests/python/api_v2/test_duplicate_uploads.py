@@ -14,6 +14,7 @@ The second upload should silently fail for all Pulp releases in the 2.x series.
 .. _Pulp #1406: https://pulp.plan.io/issues/1406
 .. _Pulp Smash #81: https://github.com/PulpQE/pulp-smash/issues/81
 """
+import pytest
 import unittest
 from urllib.parse import urlsplit
 
@@ -26,6 +27,7 @@ from pulp_2_tests.constants import PYTHON_EGG_URL
 from pulp_2_tests.tests.python.api_v2.utils import gen_repo
 from pulp_2_tests.tests.python.utils import set_up_module as setUpModule  # pylint:disable=unused-import
 
+pytestmark = pytest.mark.random_order(disabled=True)
 
 class DuplicateUploadsTestCase(BaseAPITestCase, DuplicateUploadsMixin):
     """Test how well Pulp can deal with duplicate content unit uploads."""
