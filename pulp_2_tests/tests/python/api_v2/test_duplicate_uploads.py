@@ -26,6 +26,8 @@ from pulp_2_tests.constants import PYTHON_EGG_URL
 from pulp_2_tests.tests.python.api_v2.utils import gen_repo
 from pulp_2_tests.tests.python.utils import set_up_module as setUpModule  # pylint:disable=unused-import
 
+import pytest
+pytestmark = pytest.mark.random_order(disabled=True)
 
 class DuplicateUploadsTestCase(BaseAPITestCase, DuplicateUploadsMixin):
     """Test how well Pulp can deal with duplicate content unit uploads."""

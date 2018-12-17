@@ -6,6 +6,8 @@ from pulp_smash.pulp2.utils import BaseAPICrudTestCase
 from pulp_2_tests.tests.python.api_v2.utils import gen_repo
 from pulp_2_tests.tests.python.utils import set_up_module as setUpModule  # pylint:disable=unused-import
 
+import pytest
+pytestmark = pytest.mark.random_order(disabled=True)
 
 class CRUDTestCase(BaseAPICrudTestCase):
     """Test that one can create, update, read and delete a test case."""
