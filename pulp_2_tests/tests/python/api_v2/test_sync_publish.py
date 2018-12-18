@@ -1,6 +1,7 @@
 # coding=utf-8
 """Test the sync and publish API endpoints for Python repositories."""
 import inspect
+import pytest
 import unittest
 from os.path import basename
 from urllib.parse import urljoin, urlparse
@@ -23,6 +24,8 @@ from pulp_2_tests.constants import (
 from pulp_2_tests.tests.python.api_v2.utils import gen_distributor, gen_repo
 from pulp_2_tests.tests.python.utils import set_up_module as setUpModule  # pylint:disable=unused-import
 from pulp_2_tests.tests.python.utils import skip_if
+
+PYTESTMARK = pytest.mark.random_order(disabled=True)
 
 
 class BaseTestCase(unittest.TestCase):
