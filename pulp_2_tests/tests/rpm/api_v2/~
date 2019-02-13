@@ -1,0 +1,34 @@
+{
+  "hosts": [
+    {
+      "hostname": "rhel76-219master",
+      "roles": {
+        "amqp broker": {
+          "service": "qpidd"
+        },
+        "api": {
+          "scheme": "https",
+          "service": "httpd",
+          "verify": false
+        },
+        "mongod": {},
+        "pulp celerybeat": {},
+        "pulp cli": {},
+        "pulp resource manager": {},
+        "pulp workers": {},
+        "shell": {
+          "transport": "ssh"
+        },
+        "squid": {}
+      }
+    }
+  ],
+  "pulp": {
+    "auth": [
+      "admin",
+      "admin"
+    ],
+    "selinux enabled": true,
+    "version": "2.19"
+  }
+}
