@@ -1,12 +1,15 @@
 # coding=utf-8
 """Tests that sync docker repositories."""
+import random
 import unittest
 from urllib.parse import urljoin
 
 from packaging.version import Version
 from pulp_smash import api, config, selectors
 from pulp_smash.pulp2.constants import REPOSITORY_PATH
+from pulp_smash.pulp2.utils import search_units, sync_repo
 from requests.exceptions import HTTPError
+
 
 from pulp_2_tests.constants import DOCKER_V1_FEED_URL, DOCKER_V2_FEED_URL
 from pulp_2_tests.tests.docker.api_v2.utils import gen_repo
