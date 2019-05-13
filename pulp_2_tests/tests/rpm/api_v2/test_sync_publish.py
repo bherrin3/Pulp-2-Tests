@@ -113,8 +113,26 @@ class SyncRepoBaseTestCase(unittest.TestCase):
                 self.assertEqual(error_details, [], task)
 
 
-class SyncRpmRepoTestCase(SyncRepoBaseTestCase):
+class SyncRpmRepoTestCase(unittest.TestCase):
     """Test one can create and sync an RPM repository with an RPM feed."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Create an RPM repository with a valid feed and sync it."""
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg, api.json_handler)
+        body = gen_repo()
+        body['importer_config']['feed'] = cls.get_feed_url()
+        try:
+            cls.repo = cls.client.post(REPOSITORY_PATH, body)
+            cls.report = sync_repo(cls.cfg, cls.repo)
+        except:
+            cls.tearDownClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean resources."""
+        cls.client.delete(cls.repo['_href'])
 
     @staticmethod
     def get_feed_url():
@@ -153,7 +171,7 @@ class SyncRpmRepoTestCase(SyncRepoBaseTestCase):
             self.assertEqual(len(tasks), 1)
         for count_type in ('added_count', 'removed_count', 'updated_count'):
             with self.subTest(comment=count_type):
-                self.assertEqual(tasks[0]['result'][count_type], 0)
+                self.assertEqual(tasks[0]['result'][count_type], 0, tasks[0]['result'][count_type])
 
 
 class SyncDrpmRepoTestCase(SyncRepoBaseTestCase):
