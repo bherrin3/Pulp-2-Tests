@@ -310,3 +310,23 @@ def sync_repo(cfg, repo_id, force_sync=False):
     if force_sync:
         cmd.append('--force-full')
     return cli.Client(cfg).run(cmd)
+
+class PulpStreamerGzipTestCase(unittest.TestCase):
+    """Test"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide config."""
+        cls.cfg = config.get_config()
+        if cls.cfg.pulp_version < Version('2.19'):
+            raise unittest.SkipTest('This test requires Pulp 2.19 or newer.')
+
+    def test_do(self):
+        """Test"""
+        client = cli.Client(self.cfg)
+        response = client.run(('curl', '-sHv', 'Accept-encoding: gzip', '-k', '-L', 'https://localhost/pulp/repos/pulp/pulp/fixtures/rpm-kickstart/images/pxeboot/vmlinuz')) 
+        import ipdb
+        ipdb.set_trace()
+        
+        for stream in (response.stdout, response.stderr):
+            self.assertNotIn('gzip', stream)
