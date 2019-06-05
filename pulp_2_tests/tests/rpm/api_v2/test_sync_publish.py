@@ -9,8 +9,12 @@ For information on repository sync and publish operations, see
 .. _Synchronization:
     http://docs.pulpproject.org/en/latest/dev-guide/integration/rest-api/repo/sync.html
 """
+import gzip
+import hashlib
 import inspect
 import os
+import requests
+import tempfile
 import unittest
 from threading import Thread
 from urllib.parse import urljoin
@@ -717,7 +721,22 @@ class PulpStreamerDecodeTestCase(unittest.TestCase):
     6. Verify no stdout, stderr, or return code failures from ``gunzip``.
     """
 
-    def test_pulp_streamer_encoding(self):
+    # Returned gzip is identical to source fixture file
+    def test_compare_gzip_file(self):
+        archive = self.get_pulp_streamer_filename(RPM_KICKSTART_FEED_URL)
+        self.assertEqual(
+            self.calculate_sha256(archive),
+            utils.get_sha256_checksum(RPM_KICKSTART_FEED_URL + 'isolinux/vmlinuz'),
+            self.calculate_sha256(archive)
+        )
+
+    # Test the returned gzip is valid
+    def test_valid_gzip_file(self):
+        archive = self.get_pulp_streamer_filename(RPM_KICKSTART_FEED_URL)
+        # Some gzip verification
+        self.assertTrue(gzip.decompress(archive))
+
+    def get_pulp_streamer_filename(self, feed):
         """Test pulp_streamer stream decodes responses."""
         cfg = config.get_config()
         if cfg.pulp_version < Version('2.19.1'):
@@ -737,17 +756,12 @@ class PulpStreamerDecodeTestCase(unittest.TestCase):
         )
 
         repo = client.post(REPOSITORY_PATH, body)
-        self.addCleanup(client.delete, repo['_href'])
+        #self.addCleanup(client.delete, repo['_href'])
 
         repo = client.get(repo['_href'], params={'details': True})
         sync_repo(cfg, repo)
 
-        # Create temp directory and file and download compressed file
-        cli_client = cli.Client(cfg, cli.echo_handler)
-        tempdir = cli_client.run(('mktemp', '-d')).stdout.strip()
-        self.addCleanup(cli_client.run, ('rm', '-Rf', tempdir), sudo=True)
-
-        # Distributor local path
+         # Distributor local path
         path = urljoin(
             cfg.get_base_url(),
             'pulp/repos/{0}/images/pxeboot/vmlinuz'.format(
@@ -755,28 +769,27 @@ class PulpStreamerDecodeTestCase(unittest.TestCase):
             )
         )
 
-        # Download a compressed file to check for compression
-        process = cli_client.run(
-            (
-                'curl',
-                '-o',
-                os.path.join(tempdir, 'test.gz'),
-                '-sH',
-                'Accept-encoding: gzip',
-                '-k',
-                '-L',
-                path
-            )
-        )
+        # Create a temp file
+        tmp_gzip_file = tempfile.NamedTemporaryFile(delete=False)
+        self.addCleanup(os.unlink, tmp_gzip_file.name)
 
-        for stream in process.stdout:
-            self.assertEqual(len(stream), 0, process)
+        # Write the file to disk
+        response = requests.get(path, stream=True, verify=False)
+        from ipdb import set_trace
+        set_trace()
 
-        # Run gzip test.
-        # Note: This action removes the .gz extension
-        response = cli_client.run(
-            ('gunzip', os.path.join(tempdir, 'test.gz'))
-        )
+        # with open(tmp_gzip_file.name, 'wb') as gz:
+        #     gz.write(response.raw)
+        #     gz.close()
 
-        for stream in (response.stdout, response.stderr):
-            self.assertEqual(len(stream), 0, response)
+        # Return file path
+        return tmp_gzip_file.name
+
+    def calculate_sha256(self, file):
+        sha256_hash = hashlib.sha256()
+        with open(file,"rb") as f:
+            # Read and update hash string value in blocks of 4K
+            for byte_block in iter(lambda: f.read(4096),b""):
+                sha256_hash.update(byte_block)
+            return(sha256_hash.hexdigest())
+
