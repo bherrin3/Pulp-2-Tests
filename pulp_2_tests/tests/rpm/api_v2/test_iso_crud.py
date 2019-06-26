@@ -10,7 +10,7 @@ import requests
 from packaging.version import Version
 from pulp_smash import api, config, exceptions, selectors, utils
 from pulp_smash.pulp2.constants import REPOSITORY_PATH
-from pulp_smash.pulp2.utils import BaseAPITestCase, search_units, sync_repo
+from pulp_smash.pulp2.utils import BaseAPITestCase, publish_repo, search_units, sync_repo
 
 from pulp_2_tests.constants import (
     FILE_FEED_URL,
@@ -368,6 +368,48 @@ class PulpManifestTestCase(BaseAPITestCase):
                 self.assertEqual(info['error']['response_msg'], 'Not Found')
                 self.assertIn(info['name'], missing)
 
+    def test_upload_and_delete(self):
+        """Todo.
+
+        Want to ensure the PULP_MANIFEST file is being updated accurately.
+
+        Steps:
+
+        1. Sync with FILE_FEED. Assert number of items in the PULP_MANIFEST is 3.
+        2. Remove an ISO from the iso-repo. Assert the number of units in the PULP_MANIFEST is now 2.
+           Assert that the removed iso is no longer in the PULP_MANIFEST.
+        """
+
+        # if self.cfg.pulp_version < Version('2.20'):
+        #     self.skipTest('Requires Pulp 2.20 or greater.')
+
+        #1. Check the base feed sync is accurate.
+        pulp_manifest_count = len(self.parse_pulp_manifest(FILE_FEED_URL))
+        client = api.Client(self.cfg, api.json_handler)
+        repo = client.post(REPOSITORY_PATH, _gen_iso_repo(FILE_FEED_URL))
+        self.addCleanup(client.delete, repo['_href'])
+        sync_repo(self.cfg, repo)
+        publish_repo(self.cfg, repo)
+        repo = client.get(repo['_href'], params={'details': True})
+        from ipdb import set_trace
+        set_trace()
+        self.assertEqual(repo['total_repository_units'], pulp_manifest_count)
+        self.assertEqual(
+            repo['content_unit_counts']['iso'], pulp_manifest_count)
+        self.assertEqual(repo['content_unit_counts']['iso'], 3)
+
+        #2. Remove an iso and check
+        client.post(
+            urljoin(repo['_href'], 'actions/unassociate/'),
+            {'criteria': 
+                {"type_ids": ["iso"], "filters": {"unit": {"name": "1.iso"}}}
+            }
+        )
+        self.assertEqual(
+            len(search_units(self.cfg, repo, {'type_ids': ['iso']})),
+            2,
+            search_units(self.cfg, repo, {'type_ids': ['iso']})
+        )
 
 class ISOUpdateTestCase(unittest.TestCase):
     """Verify how ISO repos handles changes in content already in Pulp."""
